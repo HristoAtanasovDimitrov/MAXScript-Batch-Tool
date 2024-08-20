@@ -9,7 +9,6 @@ from PySide2.QtGui import QFont, QPalette, QColor
 from pymxs import runtime
 import time
 import os
-import re
 
 class FileBrowser(QWidget):
     def __init__(self):
