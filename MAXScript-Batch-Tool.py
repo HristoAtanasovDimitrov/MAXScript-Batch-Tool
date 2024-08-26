@@ -1,12 +1,25 @@
-from PySide2.QtCore import Qt
-from PySide2.QtWidgets import (
-    QApplication, QLabel, QMenu, QSplitter, QWidget, QVBoxLayout, 
-    QGroupBox, QListWidget, QPushButton, QHBoxLayout, QFileDialog, 
-    QListWidgetItem, QMessageBox, QCheckBox, QProgressBar, QTextEdit, 
-    QAbstractItemView
-)
-from PySide2.QtGui import QFont, QPalette, QColor
-from pymxs import runtime
+# Dynamic import of PySide2 or PySide6 based on availability
+try:
+    from PySide6.QtCore import Qt
+    from PySide6.QtWidgets import (
+        QApplication, QLabel, QMenu, QSplitter, QWidget, QVBoxLayout, 
+        QGroupBox, QListWidget, QPushButton, QHBoxLayout, QFileDialog, 
+        QListWidgetItem, QMessageBox, QCheckBox, QProgressBar, QTextEdit, 
+        QAbstractItemView
+    )
+    from PySide6.QtGui import QFont, QPalette, QColor
+    print("Running with PySide6")
+except ImportError:
+    from PySide2.QtCore import Qt
+    from PySide2.QtWidgets import (
+        QApplication, QLabel, QMenu, QSplitter, QWidget, QVBoxLayout, 
+        QGroupBox, QListWidget, QPushButton, QHBoxLayout, QFileDialog, 
+        QListWidgetItem, QMessageBox, QCheckBox, QProgressBar, QTextEdit, 
+        QAbstractItemView
+    )
+    from PySide2.QtGui import QFont, QPalette, QColor
+    print("Running with PySide2")
+
 import time
 import os
 
@@ -76,7 +89,6 @@ class FileBrowser(QWidget):
         self.setAbortButtonStyle("#FF6B6B", "white")
         self.process_button_stop.setFixedHeight(30)
         bottom_row_layout.addWidget(self.process_button_stop)
-
 
         process_group_box.setLayout(process_layout)
         left_layout.addWidget(process_group_box)
@@ -243,12 +255,10 @@ class FileBrowser(QWidget):
         self.process_button_stop.setVisible(True)
         self.process_button_all.setVisible(False)
 
-
     def revealeElements(self):
         # Enable elements after procesing
         self.process_button_stop.setVisible(False)
         self.process_button_all.setVisible(True)
-
 
     def processAll(self):
         # Process all files, showing a warning if any list is empty
