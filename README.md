@@ -39,7 +39,7 @@ This is a Python application designed to automate the execution of multiple MAXS
 - **Progress Bar:** Track the progress of the processing through the progress bar, which updates after each MAXScript file is executed.
 - **Log Output:** The log window displays detailed information about current operations, including error messages and warnings.
 - **Abort:** Click the "Abort" button at any time to stop the batch process.
- - **Important:** To enable aborting during MAXScript execution, your MAXScript files must check the `g_abortRequested` [flag](#modifying-maxscript-files).
+   - **Important:** To enable aborting during MAXScript execution, your MAXScript files must check the `g_abortRequested` [flag](#modifying-maxscript-files).
 
 ## Loging
 - **Timestamps:** All log messages include timestamps for easier tracking.
