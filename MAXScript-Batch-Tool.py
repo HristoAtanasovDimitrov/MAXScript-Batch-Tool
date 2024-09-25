@@ -44,9 +44,7 @@ class FileBrowser(QWidget):
         self.initUI()  # Initialize UI components
 
     def initUI(self):
-        """
-        Initializes the user interface components.
-        """
+        # Initializes the user interface components.
         self.setWindowTitle('MAXScript Batch Tool')
         self.setGeometry(100, 100, 800, 800)
 
@@ -183,9 +181,7 @@ class FileBrowser(QWidget):
         return group_box, list_widget
 
     def updateGroupBoxTitles(self):
-        """
-        Updates the titles of the group boxes with the count of items.
-        """
+        # Updates the titles of the group boxes with the count of items.
         self.maxscript_group_box.setTitle(f"MAXScript files - {self.maxscript_list_widget.count()}")
         self.max_group_box.setTitle(f"3ds Max files - {self.max_list_widget.count()}")
 
@@ -229,9 +225,7 @@ class FileBrowser(QWidget):
             self.log(f"Added {len(files)} {file_type} to the list.", level="INFO")
 
     def browseListFile(self):
-        """
-        Opens a file dialog to select a list file and processes it to extract file paths.
-        """
+        # Opens a file dialog to select a list file and processes it to extract file paths.
         list_file, _ = QFileDialog.getOpenFileName(self, "Select List File", "", "Text Files (*.txt)")
         if list_file:
             with open(list_file, 'r') as file:
@@ -247,15 +241,11 @@ class FileBrowser(QWidget):
                 self.log(f"Loaded {total_files} files from list.", level="INFO")
 
     def browseMaxScriptFiles(self):
-        """
-        Browses for MAXScript files and adds them to the MAXScript list widget.
-        """
+        # Browses for MAXScript files and adds them to the MAXScript list widget.
         self.browseFiles("MAXScript Files", "MAXScript files (*.ms)", self.maxscript_list_widget)
 
     def browseMaxFiles(self):
-        """
-        Browses for 3ds Max files and adds them to the Max files list widget.
-        """
+        # Browses for 3ds Max files and adds them to the Max files list widget.
         self.browseFiles("3ds Max Files", "3ds Max Files (*.max)", self.max_list_widget)
 
     def addFilesToListWidget(self, files, list_widget):
@@ -297,15 +287,11 @@ class FileBrowser(QWidget):
         self.log("Cleared the list.", level="INFO")
 
     def clearMaxScriptFiles(self):
-        """
-        Clears the MAXScript files list widget.
-        """
+        # Clears the MAXScript files list widget.
         self.clearListWidget(self.maxscript_list_widget)
 
     def clearMaxFiles(self):
-        """
-        Clears the 3ds Max files list widget.
-        """
+        # Clears the 3ds Max files list widget.
         self.clearListWidget(self.max_list_widget)
 
     def handleSaveMaxFile(self, state):
@@ -320,9 +306,7 @@ class FileBrowser(QWidget):
         self.log(f"Save .max files after processing is {status}.", level="INFO")
 
     def stopProcessing(self):
-        """
-        Signals to stop processing.
-        """
+        # Signals to stop processing.
         self.stopButtonPressed = True
         runtime.g_abortRequested = True  # Set the abort flag in runtime
         self.log("Abort requested. The process will stop after the current operation.", level="WARNING")
@@ -344,9 +328,7 @@ class FileBrowser(QWidget):
         """)
 
     def hideElements(self):
-        """
-        Disables input controls during processing.
-        """
+        # Disables input controls during processing.
         self.process_button_stop.setVisible(True)
         self.process_button_all.setVisible(False)
         self.maxscript_list_widget.setEnabled(False)
@@ -360,9 +342,7 @@ class FileBrowser(QWidget):
                 button.setEnabled(False)
 
     def revealeElements(self):
-        """
-        Enables input controls after processing.
-        """
+        # Enables input controls after processing.
         self.process_button_stop.setVisible(False)
         self.process_button_all.setVisible(True)
         self.maxscript_list_widget.setEnabled(True)
@@ -409,9 +389,7 @@ class FileBrowser(QWidget):
         self.progress_bar.setValue(0)  # Reset progress bar after processing
 
     def processFiles(self, max_script_files, max_files, save_max_file):
-        """
-        Processes each 3ds Max file with the selected MAXScript files.
-        """
+        # Processes each 3ds Max file with the selected MAXScript files.
         start_time = time.time()
         total_steps = len(max_files) * len(max_script_files)
         current_step = 0
@@ -567,16 +545,12 @@ class FileBrowser(QWidget):
         menu.exec_(self.log_output.mapToGlobal(pos))
 
     def clearLog(self):
-        """
-        Clears the log output.
-        """
+        # Clears the log output.
         self.log_output.clear()
         self.log("Log cleared.", level="INFO")
 
     def copySelectedText(self):
-        """
-        Copies the selected text from the log output to the clipboard.
-        """
+        # Copies the selected text from the log output to the clipboard.
         selected_text = self.log_output.textCursor().selectedText()
         clipboard = QApplication.clipboard()
         clipboard.setText(selected_text)
