@@ -14,6 +14,8 @@ This is a Python application designed to automate the execution of multiple MAXS
 ## Features
 - **Batch Processing:** Execute multiple MAXScript files on multiple 3ds Max files simultaneously.
 - **Graphical User Interface:** User-friendly interface built with PySide2/PySide6 (depends on version of 3ds Max that is used).
+- **Tooltips:** Tooltips for description on avery UI element.
+- **Drag & Drop Functionality:** Ability to Drag & Drop files to the lists.
 - **Progress Tracking:** Progress bar updates and Log after the execution of each MAXScript file.
 - **Abort Functionality:** Ability to abort the batch process at any time.
 - **Error Handling:** Detailed logging with timestamps and error notifications.
