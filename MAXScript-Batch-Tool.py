@@ -1,19 +1,19 @@
 # Dynamic import of PySide2 or PySide6 based on availability
 try:
-    from PySide6.QtCore import Qt
+    from PySide6.QtCore import Qt, Signal, Slot
     from PySide6.QtWidgets import (
         QApplication, QLabel, QMenu, QSplitter, QWidget, QVBoxLayout,
-        QGroupBox, QListWidget, QPushButton, QHBoxLayout, QFileDialog,
+        QGroupBox, QPushButton, QHBoxLayout, QFileDialog,
         QListWidgetItem, QMessageBox, QCheckBox, QProgressBar, QTextEdit,
         QAbstractItemView
     )
     from PySide6.QtGui import QFont
     print("Running with PySide6")
 except ImportError:
-    from PySide2.QtCore import Qt
+    from PySide2.QtCore import Qt, Signal, Slot
     from PySide2.QtWidgets import (
         QApplication, QLabel, QMenu, QSplitter, QWidget, QVBoxLayout,
-        QGroupBox, QListWidget, QPushButton, QHBoxLayout, QFileDialog,
+        QGroupBox, QPushButton, QHBoxLayout, QFileDialog,
         QListWidgetItem, QMessageBox, QCheckBox, QProgressBar, QTextEdit,
         QAbstractItemView
     )
@@ -35,6 +35,42 @@ try:
 except ImportError:
     import shiboken6 as shiboken
 
+class FileListWidget(QListWidget):
+    """
+    Custom QListWidget to handle drag-and-drop of files.
+    """
+    fileDropped = Signal(list)  # Signal to emit when files are dropped
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setAcceptDrops(True)
+        self.setDragDropMode(QListWidget.InternalMove)
+
+    def dragEnterEvent(self, event):
+        if event.mimeData().hasUrls():
+            event.acceptProposedAction()
+        else:
+            super(FileListWidget, self).dragEnterEvent(event)
+
+    def dragMoveEvent(self, event):
+        if event.mimeData().hasUrls():
+            event.acceptProposedAction()
+        else:
+            super(FileListWidget, self).dragMoveEvent(event)
+
+    def dropEvent(self, event):
+        if event.mimeData().hasUrls():
+            files = []
+            for url in event.mimeData().urls():
+                file_path = url.toLocalFile()
+                if file_path:
+                    files.append(file_path)
+            if files:
+                self.fileDropped.emit(files)
+            event.acceptProposedAction()
+        else:
+            super(FileListWidget, self).dropEvent(event)
+
 class FileBrowser(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -44,7 +80,9 @@ class FileBrowser(QWidget):
         self.initUI()  # Initialize UI components
 
     def initUI(self):
-        # Initializes the user interface components.
+        """
+        Initializes the user interface components.
+        """
         self.setWindowTitle('MAXScript Batch Tool')
         self.setGeometry(100, 100, 800, 800)
 
@@ -56,10 +94,10 @@ class FileBrowser(QWidget):
         # Create left splitter with two group boxes for MAXScript and 3ds Max files
         left_splitter = QSplitter(Qt.Vertical)
         self.maxscript_group_box, self.maxscript_list_widget = self.createGroupBox(
-            "MAXScript files - 0", self.browseMaxScriptFiles, self.clearMaxScriptFiles, self.showMaxScriptContextMenu
+            "MAXScript files - 0", self.browseMaxScriptFiles, self.clearMaxScriptFiles, self.showMaxScriptContextMenu, 'maxscript'
         )
         self.max_group_box, self.max_list_widget = self.createGroupBox(
-            "3ds Max files - 0", self.browseMaxFiles, self.clearMaxFiles, self.showMaxContextMenu
+            "3ds Max files - 0", self.browseMaxFiles, self.clearMaxFiles, self.showMaxContextMenu, 'max'
         )
         left_splitter.addWidget(self.maxscript_group_box)
         left_splitter.addWidget(self.max_group_box)
@@ -77,13 +115,13 @@ class FileBrowser(QWidget):
         self.save_max_checkbox = QCheckBox("Save .max files after processing")
         self.save_max_checkbox.stateChanged.connect(self.handleSaveMaxFile)
         self.save_max_checkbox.setStyleSheet("QCheckBox { font-weight: bold; }")
-        self.save_max_checkbox.setToolTip("When enabled, 3ds Max files will be saved after the execution of each MAXScript file")
+        self.save_max_checkbox.setToolTip("When enabled, 3ds Max files will be saved after the execution of each MAXScript file.")
         top_row_layout.addWidget(self.save_max_checkbox)
 
         self.browse_list_file_button = QPushButton("Browse List File")
         self.browse_list_file_button.clicked.connect(self.browseListFile)
         self.browse_list_file_button.setStyleSheet("QPushButton { font-weight: bold; }")
-        self.browse_list_file_button.setToolTip("Pick a .txt file that contains list of paths to MAXScript or 3ds Max files")
+        self.browse_list_file_button.setToolTip("Select a .txt file containing paths to MAXScript or 3ds Max files.")
         top_row_layout.addWidget(self.browse_list_file_button)
 
         process_layout.addLayout(top_row_layout)
@@ -93,14 +131,14 @@ class FileBrowser(QWidget):
         self.process_button_all = QPushButton("Process All")
         self.process_button_all.clicked.connect(self.processAll)
         self.process_button_all.setStyleSheet("QPushButton { font-weight: bold; }")
-        self.process_button_all.setToolTip("Executes each MAXScript file on every 3ds Max file")
+        self.process_button_all.setToolTip("Executes each MAXScript file on every 3ds Max file.")
         self.process_button_all.setFixedHeight(30)
         bottom_row_layout.addWidget(self.process_button_all)
 
         self.process_button_stop = QPushButton("Abort")
         self.process_button_stop.setVisible(False)
         self.process_button_stop.clicked.connect(self.stopProcessing)
-        self.process_button_stop.setToolTip("Interrupts the execution of the MAXScript files on the 3ds Max files")
+        self.process_button_stop.setToolTip("Interrupts the execution of the MAXScript files on the 3ds Max files.")
         self.setAbortButtonStyle("#FF6B6B", "black")  # Text color is black
         self.process_button_stop.setFixedHeight(30)
         bottom_row_layout.addWidget(self.process_button_stop)
@@ -116,11 +154,13 @@ class FileBrowser(QWidget):
         # Create right layout for progress bar and log output
         right_layout = QVBoxLayout()
         self.progress_group_box = QGroupBox("Progress:")
+        self.progress_group_box.setToolTip("Displays the progress of the processing tasks.")
         progress_layout = QHBoxLayout()
         self.progress_bar = QProgressBar()
         self.progress_bar.setValue(0)
         self.progress_bar.setFixedHeight(10)
         self.progress_bar.setTextVisible(False)
+        self.progress_bar.setToolTip("Shows the progress percentage.")
         progress_layout.addWidget(self.progress_bar)
         self.progress_group_box.setLayout(progress_layout)
         right_layout.addWidget(self.progress_group_box)
@@ -129,6 +169,7 @@ class FileBrowser(QWidget):
         self.log_output.setReadOnly(True)
         self.log_output.setContextMenuPolicy(Qt.CustomContextMenu)
         self.log_output.customContextMenuRequested.connect(self.showLogContextMenu)
+        self.log_output.setToolTip("Displays log messages. Right-click for options.")
         right_layout.addWidget(self.log_output)
 
         right_widget = QWidget()
@@ -142,7 +183,7 @@ class FileBrowser(QWidget):
 
         self.setLayout(main_layout)
 
-    def createGroupBox(self, title, browse_func, clear_func, context_menu_func):
+    def createGroupBox(self, title, browse_func, clear_func, context_menu_func, file_type):
         """
         Creates a group box with a list widget, browse, and clear buttons.
 
@@ -151,28 +192,33 @@ class FileBrowser(QWidget):
             browse_func (callable): Function to call when 'Browse Files' is clicked.
             clear_func (callable): Function to call when 'Clear List' is clicked.
             context_menu_func (callable): Function to call for the context menu.
+            file_type (str): The type of files ('maxscript' or 'max').
 
         Returns:
             tuple: A tuple containing the group box and list widget.
         """
         group_box = QGroupBox(title)
+        group_box.setToolTip(f"List of {'MAXScript' if file_type == 'maxscript' else '3ds Max'} files to process.")
         layout = QVBoxLayout()
         label = QLabel("File Names  /  Directory Paths")
         label.setStyleSheet("color: gray;")
         layout.addWidget(label)
-        list_widget = QListWidget()
-        list_widget.setDragDropMode(QListWidget.InternalMove)
-        list_widget.setContextMenuPolicy(Qt.CustomContextMenu)
+        list_widget = FileListWidget()
+        list_widget.setDragDropMode(QAbstractItemView.InternalMove)
         list_widget.customContextMenuRequested.connect(context_menu_func)
         list_widget.setFont(QFont("Consolas", 10))
         list_widget.setSelectionMode(QAbstractItemView.ExtendedSelection)
+        list_widget.fileDropped.connect(lambda files, lw=list_widget: self.handleFilesDropped(files, lw, file_type))
+        list_widget.setToolTip(f"Drag and drop {'MAXScript' if file_type == 'maxscript' else '3ds Max'} files here.")
         layout.addWidget(list_widget)
         browse_button = QPushButton("Browse Files")
         browse_button.setStyleSheet("QPushButton { font-weight: bold; }")
         browse_button.clicked.connect(browse_func)
+        browse_button.setToolTip(f"Browse and select {'MAXScript' if file_type == 'maxscript' else '3ds Max'} files.")
         clear_button = QPushButton("Clear List")
         clear_button.setStyleSheet("QPushButton { font-weight: bold; }")
         clear_button.clicked.connect(clear_func)
+        clear_button.setToolTip("Clear all files from the list.")
         button_layout = QHBoxLayout()
         button_layout.addWidget(browse_button)
         button_layout.addWidget(clear_button)
@@ -180,8 +226,34 @@ class FileBrowser(QWidget):
         group_box.setLayout(layout)
         return group_box, list_widget
 
+    def handleFilesDropped(self, files, list_widget, file_type):
+        """
+        Handles files dropped onto the list widget.
+
+        Args:
+            files (list): List of file paths.
+            list_widget (QListWidget): The list widget to add files to.
+            file_type (str): The type of files expected ('maxscript' or 'max').
+        """
+        # Filter files based on file_type
+        if file_type == 'maxscript':
+            filtered_files = [f for f in files if f.lower().endswith('.ms')]
+        elif file_type == 'max':
+            filtered_files = [f for f in files if f.lower().endswith('.max')]
+        else:
+            filtered_files = files  # No filtering
+
+        if filtered_files:
+            self.addFilesToListWidget(filtered_files, list_widget)
+            self.updateGroupBoxTitles()
+            self.log(f"Added {len(filtered_files)} files via drag and drop.", level="INFO")
+        else:
+            self.log("No valid files found in the drop.", level="WARNING")
+
     def updateGroupBoxTitles(self):
-        # Updates the titles of the group boxes with the count of items.
+        """
+        Updates the titles of the group boxes with the count of items.
+        """
         self.maxscript_group_box.setTitle(f"MAXScript files - {self.maxscript_list_widget.count()}")
         self.max_group_box.setTitle(f"3ds Max files - {self.max_list_widget.count()}")
 
@@ -225,7 +297,9 @@ class FileBrowser(QWidget):
             self.log(f"Added {len(files)} {file_type} to the list.", level="INFO")
 
     def browseListFile(self):
-        # Opens a file dialog to select a list file and processes it to extract file paths.
+        """
+        Opens a file dialog to select a list file and processes it to extract file paths.
+        """
         list_file, _ = QFileDialog.getOpenFileName(self, "Select List File", "", "Text Files (*.txt)")
         if list_file:
             with open(list_file, 'r') as file:
@@ -241,39 +315,65 @@ class FileBrowser(QWidget):
                 self.log(f"Loaded {total_files} files from list.", level="INFO")
 
     def browseMaxScriptFiles(self):
-        # Browses for MAXScript files and adds them to the MAXScript list widget.
+        """
+        Browses for MAXScript files and adds them to the MAXScript list widget.
+        """
         self.browseFiles("MAXScript Files", "MAXScript files (*.ms)", self.maxscript_list_widget)
 
     def browseMaxFiles(self):
-        # Browses for 3ds Max files and adds them to the Max files list widget.
+        """
+        Browses for 3ds Max files and adds them to the Max files list widget.
+        """
         self.browseFiles("3ds Max Files", "3ds Max Files (*.max)", self.max_list_widget)
 
     def addFilesToListWidget(self, files, list_widget):
         """
         Adds selected files to the list widget, ensuring no duplicates.
+        Updates the padding for all items to align filenames and directory paths.
 
         Args:
             files (list): List of file paths to add.
             list_widget (QListWidget): The list widget to add files to.
         """
-        basenames = [os.path.basename(file_path) for file_path in files]
+        # Normalize existing file paths in the list widget
+        existing_files = []
+        for index in range(list_widget.count()):
+            item_file_path = list_widget.item(index).data(Qt.UserRole)
+            normalized_path = os.path.normcase(os.path.abspath(item_file_path))
+            existing_files.append(normalized_path)
 
+        # Prepare to determine the padding for filenames
+        # Include both existing and new files for padding calculation
+        all_file_paths = existing_files + [os.path.normcase(os.path.abspath(f)) for f in files]
+        basenames = [os.path.basename(file_path) for file_path in all_file_paths]
         if basenames:
             longest_filename = max(basenames, key=len)
             length_of_longest = len(longest_filename)
         else:
             length_of_longest = 0
 
-        existing_files = [list_widget.item(index).data(Qt.UserRole) for index in range(list_widget.count())]
+        # Update existing items in the list widget with new padding
+        for index in range(list_widget.count()):
+            item = list_widget.item(index)
+            file_path = item.data(Qt.UserRole)
+            file_name = os.path.basename(file_path)
+            file_name_padded = file_name.ljust(length_of_longest + 5)
+            dir_path = os.path.dirname(file_path)
+            item.setText(f"{file_name_padded}{dir_path}")
 
+        # Add new files to the list widget if they are not already present
         for file_path in files:
-            if file_path not in existing_files:
+            normalized_new_file = os.path.normcase(os.path.abspath(file_path))
+            if normalized_new_file not in existing_files:
                 file_name = os.path.basename(file_path)
                 file_name_padded = file_name.ljust(length_of_longest + 5)
                 dir_path = os.path.dirname(file_path)
                 list_item = QListWidgetItem(f"{file_name_padded}{dir_path}")
                 list_item.setData(Qt.UserRole, file_path)
                 list_widget.addItem(list_item)
+            else:
+                self.log(f"File already in the list: {file_path}", level="INFO")
+
 
     def clearListWidget(self, list_widget):
         """
@@ -287,11 +387,15 @@ class FileBrowser(QWidget):
         self.log("Cleared the list.", level="INFO")
 
     def clearMaxScriptFiles(self):
-        # Clears the MAXScript files list widget.
+        """
+        Clears the MAXScript files list widget.
+        """
         self.clearListWidget(self.maxscript_list_widget)
 
     def clearMaxFiles(self):
-        # Clears the 3ds Max files list widget.
+        """
+        Clears the 3ds Max files list widget.
+        """
         self.clearListWidget(self.max_list_widget)
 
     def handleSaveMaxFile(self, state):
@@ -306,7 +410,9 @@ class FileBrowser(QWidget):
         self.log(f"Save .max files after processing is {status}.", level="INFO")
 
     def stopProcessing(self):
-        # Signals to stop processing.
+        """
+        Signals to stop processing.
+        """
         self.stopButtonPressed = True
         runtime.g_abortRequested = True  # Set the abort flag in runtime
         self.log("Abort requested. The process will stop after the current operation.", level="WARNING")
@@ -328,7 +434,9 @@ class FileBrowser(QWidget):
         """)
 
     def hideElements(self):
-        # Disables input controls during processing.
+        """
+        Disables input controls during processing.
+        """
         self.process_button_stop.setVisible(True)
         self.process_button_all.setVisible(False)
         self.maxscript_list_widget.setEnabled(False)
@@ -342,7 +450,9 @@ class FileBrowser(QWidget):
                 button.setEnabled(False)
 
     def revealeElements(self):
-        # Enables input controls after processing.
+        """
+        Enables input controls after processing.
+        """
         self.process_button_stop.setVisible(False)
         self.process_button_all.setVisible(True)
         self.maxscript_list_widget.setEnabled(True)
@@ -373,14 +483,7 @@ class FileBrowser(QWidget):
         max_script_files = [self.maxscript_list_widget.item(index).data(Qt.UserRole) for index in range(self.maxscript_list_widget.count())]
         max_files = [self.max_list_widget.item(index).data(Qt.UserRole) for index in range(self.max_list_widget.count())]
 
-        # Validate file paths
-        max_script_files = [path for path in max_script_files if Path(path).exists()]
-        max_files = [path for path in max_files if Path(path).exists()]
-        if not max_script_files or not max_files:
-            QMessageBox.warning(self, "Warning", "One or more selected files do not exist.")
-            self.revealeElements()
-            return
-
+        # Start processing without pre-validating file paths
         self.log(f"Starting processing of {len(max_files)} 3ds Max files with {len(max_script_files)} MAXScript files.", level="INFO")
 
         # Start processing
@@ -389,9 +492,17 @@ class FileBrowser(QWidget):
         self.progress_bar.setValue(0)  # Reset progress bar after processing
 
     def processFiles(self, max_script_files, max_files, save_max_file):
-        # Processes each 3ds Max file with the selected MAXScript files.
+        """
+        Processes each 3ds Max file with the selected MAXScript files.
+        """
         start_time = time.time()
         total_steps = len(max_files) * len(max_script_files)
+        if total_steps == 0:
+            self.log("No files to process.", level="WARNING")
+            self.progress_bar.setValue(0)
+            self.progress_group_box.setTitle(f"Progress:")
+            return
+
         current_step = 0
 
         for i, max_file in enumerate(max_files):
@@ -405,6 +516,11 @@ class FileBrowser(QWidget):
                 self.log(f"Processing aborted at {aborted_percentage:.1f}%.", level="WARNING")
                 return
 
+            if not os.path.exists(max_file):
+                self.log(f"3ds Max file not found: {max_file}", level="ERROR")
+                self.errors_occurred = True
+                continue  # Skip to next file
+
             try:
                 self.log(f"Loading 3ds Max file: {max_file}", level="LOADING")
                 QApplication.processEvents()
@@ -417,6 +533,12 @@ class FileBrowser(QWidget):
             for max_script_file in max_script_files:
                 if self.stopButtonPressed:
                     break  # Exit the scripts loop
+
+                if not os.path.exists(max_script_file):
+                    self.log(f"MAXScript file not found: {max_script_file}", level="ERROR")
+                    self.errors_occurred = True
+                    continue  # Skip to next script
+
                 try:
                     self.log(f"Running MAXScript file: {max_script_file}", level="RUNNING")
                     QApplication.processEvents()
@@ -460,6 +582,7 @@ class FileBrowser(QWidget):
         QMessageBox.information(self, "Done!", "Processing 3ds Max files completed!")
         self.progress_bar.setValue(0)
         self.progress_group_box.setTitle(f"Progress:")
+
 
     def updateProgress(self, current_step, total_steps, start_time):
         """
