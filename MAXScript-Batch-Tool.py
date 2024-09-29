@@ -1,3 +1,16 @@
+# --< Description >-- # # # # # # # # # # # # # # # # # # # # # #
+#                                                               #
+#    This is a Python application designed to automate          #
+#    the execution of multiple MAXScript files on a             #
+#    batch of 3ds Max files. This tool provides a convenient    #
+#    interface within 3ds Max, allowing users to optimize       #
+#    repetitive tasks and enhance productivity.                 #
+#                                                               #
+#    MIT License                                                #
+#    Copyright (c) 2024 Hristo Dimitrov                         #
+#                                                               #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
 # Dynamic import of PySide2 or PySide6 based on availability
 try:
     from PySide6.QtCore import Qt, Signal, Slot
