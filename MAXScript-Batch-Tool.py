@@ -41,12 +41,8 @@ from pathlib import Path
 # Importing 'runtime' from pymxs
 from pymxs import runtime
 
-# Importing qtmax and shiboken to get the main Max window
+# Importing qtmax to get the main Max window
 import qtmax
-try:
-    import shiboken2 as shiboken
-except ImportError:
-    import shiboken6 as shiboken
 
 class FileListWidget(QListWidget):
     """
@@ -387,7 +383,6 @@ class FileBrowser(QWidget):
             else:
                 self.log(f"File already in the list: {file_path}", level="INFO")
 
-
     def clearListWidget(self, list_widget):
         """
         Clears all items from the specified list widget.
@@ -595,7 +590,6 @@ class FileBrowser(QWidget):
         QMessageBox.information(self, "Done!", "Processing 3ds Max files completed!")
         self.progress_bar.setValue(0)
         self.progress_group_box.setTitle(f"Progress:")
-
 
     def updateProgress(self, current_step, total_steps, start_time):
         """
