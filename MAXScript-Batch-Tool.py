@@ -1,4 +1,5 @@
-# --< Description >-- # # # # # # # # # # # # # # # # # # # # # #
+# --< Description >-- #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 #                                                               #
 #    This is a Python application designed to automate          #
 #    the execution of multiple MAXScript files on a             #
@@ -32,23 +33,19 @@ except ImportError:
     )
     from PySide2.QtGui import QFont
     print("Running with PySide2")
-
+# Importing 'runtime' from pymxs
+from pymxs import runtime
 import time
 import os
 import re
 from pathlib import Path
 
-# Importing 'runtime' from pymxs
-from pymxs import runtime
-
-# Importing qtmax to get the main Max window
-import qtmax
-
 class FileListWidget(QListWidget):
     """
-    Custom QListWidget to handle drag-and-drop of files.
+    Custom QListWidget to handle drag-and-drop of files and key events.
     """
     fileDropped = Signal(list)  # Signal to emit when files are dropped
+    removeRequested = Signal()  # Signal to emit when remove is requested via Delete key
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -79,6 +76,19 @@ class FileListWidget(QListWidget):
             event.acceptProposedAction()
         else:
             super(FileListWidget, self).dropEvent(event)
+
+    def keyPressEvent(self, event):
+        """
+        Handles key press events to detect Delete key presses.
+
+        Args:
+            event (QKeyEvent): The key event.
+        """
+        if event.key() in (Qt.Key_Delete, Qt.Key_Backspace):
+            if self.selectedItems():
+                self.removeRequested.emit()
+        else:
+            super(FileListWidget, self).keyPressEvent(event)
 
 class FileBrowser(QWidget):
     def __init__(self, parent=None):
@@ -213,11 +223,13 @@ class FileBrowser(QWidget):
         label.setStyleSheet("color: gray;")
         layout.addWidget(label)
         list_widget = FileListWidget()
+        list_widget.setContextMenuPolicy(Qt.CustomContextMenu)  # Added line
         list_widget.setDragDropMode(QAbstractItemView.InternalMove)
         list_widget.customContextMenuRequested.connect(context_menu_func)
         list_widget.setFont(QFont("Consolas", 10))
         list_widget.setSelectionMode(QAbstractItemView.ExtendedSelection)
         list_widget.fileDropped.connect(lambda files, lw=list_widget: self.handleFilesDropped(files, lw, file_type))
+        list_widget.removeRequested.connect(lambda lw=list_widget: self.removeSelectedItems(lw))
         list_widget.setToolTip(f"Drag and drop {'MAXScript' if file_type == 'maxscript' else '3ds Max'} files here.")
         layout.addWidget(list_widget)
         browse_button = QPushButton("Browse Files")
@@ -277,15 +289,24 @@ class FileBrowser(QWidget):
         """
         color_map = {
             "INFO": "#FFFFFF",     # White
-            "LOADING": "#539dd3",  # Blue
-            "RUNNING": "#00FF00",  # Green
-            "SAVING": "#c687be",   # Purple
-            "WARNING": "#FFA500",  # Orange
-            "ERROR": "#f74040"     # Red
+            "LOADING": "#5b8fe3",  # Blue
+            "RUNNING": "#96df5a",  # Green
+            "SAVING": "#ae7fb5",   # Purple
+            "WARNING": "#ffc966",  # Yellow
+            "ERROR": "#ff8566"     # Red
         }
-        color = color_map.get(level, "#FFFFFF")
+        text_color = color_map.get(level, "#FFFFFF")
         timestamp = time.strftime("%H:%M:%S", time.localtime())
-        self.log_output.append(f'<span style="color:{color}">[{timestamp}] {message}</span>')
+        
+        # Create styled timestamp in bold
+        styled_timestamp = f'<span style="font-weight:bold;">[{timestamp}]</span>'
+        
+        # Combine styled timestamp with unstyled message and assain color
+        full_message = f'<span style="color:{text_color};">{styled_timestamp} {message}</span>'
+        
+        # Append to log_output
+        self.log_output.append(full_message)
+        
         # Scroll to the end
         self.log_output.verticalScrollBar().setValue(self.log_output.verticalScrollBar().maximum())
         QApplication.processEvents()
@@ -699,15 +720,10 @@ class FileBrowser(QWidget):
         self.updateGroupBoxTitles()
         self.log(f"Removed {count} items from the list.", level="INFO")
 
-# Create and show the application window
-app = QApplication.instance()
-if not app:
-    app = QApplication([])
+if __name__ == "__main__":
+    # Get the main 3ds Max window
+    max_main_window = QWidget.find(runtime.windows.getmaxhwnd())
 
-# Get the main 3ds Max window
-max_main_window = qtmax.GetQMaxMainWindow()
-
-# Create the FileBrowser window with max_main_window as parent
-window = FileBrowser(parent=max_main_window)
-window.show()
-app.exec_()
+    # Create the FileBrowser window with max_main_window as parent
+    window = FileBrowser(parent=max_main_window)
+    window.show()
