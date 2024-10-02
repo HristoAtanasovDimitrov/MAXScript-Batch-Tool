@@ -49,7 +49,7 @@ This is a Python application designed to automate the execution of multiple MAXS
   - $${\color{#FFFFFF}INFO:}$$ - General information.
   - $${\color{#5b8fe3}LOADING:}$$ - Loading 3ds Max files.
   - $${\color{#96df5a}RUNNING:}$$ - Executing MAXScript files.
-  - $${\color{#ae7fb5}SAVING:}$$ - Saving files.
+  - $${\color{#ae7fb5}SAVING:}$$ - Saving 3ds Max files.
   - $${\color{#ffc966}WARNING:}$$ - Warnings.
   - $${\color{#ff8566}ERROR:}$$ - Errors.
 - **Context Menu:** Right-click on the log window to copy or clear the log output.
