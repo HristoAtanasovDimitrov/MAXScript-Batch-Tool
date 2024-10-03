@@ -65,5 +65,4 @@ if g_abortRequested do
 ```
 **Tip:** If your scripts contain long loops or operations, insert checks for `g_abortRequested` within them to allow for quick aborting when needed.
 
-## License
-[MIT](https://choosealicense.com/licenses/mit/)
+## [License](https://github.com/HristoAtanasovDimitrov/MAXScript-Batch-Tool/blob/main/LICENSE)
