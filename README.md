@@ -23,7 +23,7 @@ This is a Python application designed to automate the execution of multiple MAXS
 - **Custom Execution:** Supports using list files containing paths to MAXScript and 3ds Max files.
 
 ## Requirements
-- 3ds Max 2017 or later
+- 3ds Max 2021 or later
 
 ## Usage
 - Run the Python script within 3ds Max.
