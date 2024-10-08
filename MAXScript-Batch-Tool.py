@@ -17,7 +17,7 @@ try:
     from PySide6.QtCore import Qt, Signal, Slot
     from PySide6.QtWidgets import (
         QApplication, QLabel, QMenu, QSplitter, QWidget, QVBoxLayout,
-        QGroupBox, QPushButton, QHBoxLayout, QFileDialog,
+        QGroupBox, QPushButton, QHBoxLayout, QFileDialog, QListWidget,
         QListWidgetItem, QMessageBox, QCheckBox, QProgressBar, QTextEdit,
         QAbstractItemView
     )
@@ -27,7 +27,7 @@ except ImportError:
     from PySide2.QtCore import Qt, Signal, Slot
     from PySide2.QtWidgets import (
         QApplication, QLabel, QMenu, QSplitter, QWidget, QVBoxLayout,
-        QGroupBox, QPushButton, QHBoxLayout, QFileDialog,
+        QGroupBox, QPushButton, QHBoxLayout, QFileDialog, QListWidget,
         QListWidgetItem, QMessageBox, QCheckBox, QProgressBar, QTextEdit,
         QAbstractItemView
     )
