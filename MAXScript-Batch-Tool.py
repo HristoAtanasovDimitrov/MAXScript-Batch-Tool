@@ -1,5 +1,4 @@
-# --< Description >-- #
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# --< Description >-- # # # # # # # # # # # # # # # # # # # # # #
 #                                                               #
 #    This is a Python application designed to automate          #
 #    the execution of multiple MAXScript files on a             #
