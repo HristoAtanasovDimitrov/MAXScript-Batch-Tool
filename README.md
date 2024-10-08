@@ -34,7 +34,6 @@ This is a Python application designed to automate the execution of multiple MAXS
    ```
    "The\path\to\the\MAXSctipt file.ms"
    "The\path\to\the\3dsMax file.ms"
-   ...
    ```
 - **Save Files:** Check the "Save .max files after processing" option if you want to save the 3ds Max files after processing.
 - **Process All:** Click the "Process All" button to begin batch processing.
