@@ -433,7 +433,7 @@ class FileBrowser(QWidget):
         Args:
             state (Qt.CheckState): The state of the checkbox.
         """
-        self.save_max_file = state == Qt.Checked
+        self.save_max_file = bool(state)
         status = "enabled" if self.save_max_file else "disabled"
         self.log(f"Save .max files after processing is {status}.", level="INFO")
 
